@@ -1,0 +1,100 @@
+# CommunityPulse - AI Community Intelligence Platform
+# 48-hour hackathon project for enhanced customer experience
+
+## Project Context
+Building an AI-powered platform that analyzes community communication, prevents misinformation, and provides actionable insights to property managers and community leaders.
+
+## Tech Stack
+- Backend: Python + FastAPI + SQLite
+- Frontend: React + Tailwind CSS + Chart.js
+- AI/ML: NLTK, VADER sentiment analysis, scikit-learn
+- Deployment: Docker + cloud hosting
+
+## Development Priorities
+1. SPEED over perfection (48-hour constraint)
+2. Working demo over comprehensive features
+3. Clean, readable code with good error handling
+4. Mobile-responsive design
+5. Clear API documentation
+
+## Key Features to Implement
+- Community post ingestion and analysis
+- Real-time sentiment analysis
+- Misinformation detection alerts
+- Community health scoring
+- Property manager dashboard
+- Issue priority ranking
+
+## Coding Guidelines
+- Use FastAPI for all backend endpoints
+- Include proper validation and error handling
+- Use Tailwind utility classes only (no custom CSS)
+- Generate realistic sample data for demos
+- Focus on 3 core features maximum
+- Include security best practices (JWT, input validation)
+
+## Avoid
+- Over-engineering solutions
+- Complex authentication systems
+- Unnecessary dependencies
+- Features beyond core MVP scope
+
+## Project Structure
+```
+communitypulse/
+├── backend/                 # FastAPI backend
+│   ├── main.py             # Main application
+│   ├── requirements.txt    # Python dependencies
+│   └── Dockerfile         # Backend container
+├── frontend/               # React frontend
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   ├── App.js         # Main app component
+│   │   └── index.js       # Entry point
+│   ├── package.json       # Node.js dependencies
+│   └── Dockerfile         # Frontend container
+├── docker-compose.yml      # Multi-container setup
+├── start.sh               # Quick start script
+└── dev-setup.sh           # Development setup
+```
+
+## Current Implementation Status
+- ✅ Backend API with FastAPI and AI analysis
+- ✅ Frontend React app with Tailwind CSS
+- ✅ Docker containerization
+- ✅ Real-time sentiment analysis
+- ✅ Misinformation detection
+- ✅ Community health scoring
+- ✅ Interactive dashboard with charts
+- ✅ Alert system for high-priority issues
+- ✅ Mobile-responsive design
+- ✅ Sample data generation
+- ✅ API documentation
+
+## Development Focus Areas
+1. **AI/ML Integration**: VADER sentiment analysis, misinformation detection
+2. **Real-time Processing**: Instant analysis of community posts
+3. **Data Visualization**: Charts and analytics for insights
+4. **User Experience**: Intuitive, mobile-friendly interface
+5. **Scalability**: Microservices architecture ready for production
+
+## Security Considerations
+- Input validation and sanitization
+- CORS configuration
+- Error handling without exposing internals
+- Rate limiting (ready for implementation)
+- JWT authentication (ready for implementation)
+
+## Performance Optimization
+- Efficient database queries
+- Optimized React components
+- Lazy loading where appropriate
+- Minimal bundle sizes
+- Fast API responses
+
+## Testing Strategy
+- Manual testing with realistic sample data
+- API endpoint validation
+- UI component testing
+- Cross-browser compatibility
+- Mobile responsiveness testing
