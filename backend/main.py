@@ -121,6 +121,43 @@ class DashboardResponse(BaseModel):
     alerts: List[AlertResponse]
     top_issues: List[dict]
 
+class AnalyzeRequest(BaseModel):
+    content: str
+    author: Optional[str] = "Anonymous"
+
+class AnalyzeResponse(BaseModel):
+    content: str
+    author: str
+    sentiment_score: float
+    sentiment_label: str
+    misinformation_risk: float
+    priority_score: float
+    analysis_timestamp: str
+
+class HealthResponse(BaseModel):
+    community_health_score: float
+    total_posts: int
+    positive_ratio: float
+    negative_ratio: float
+    misinformation_ratio: float
+    health_status: str
+    recommendations: List[str]
+
+class SentimentAnalysisRequest(BaseModel):
+    content: str
+    author: Optional[str] = "Anonymous"
+
+class SentimentAnalysisResponse(BaseModel):
+    content: str
+    author: str
+    sentiment_score: float
+    sentiment_label: str
+    confidence_score: float
+    positive_confidence: float
+    negative_confidence: float
+    neutral_confidence: float
+    analysis_timestamp: str
+
 # AI Analysis Functions
 def analyze_sentiment(text: str) -> dict:
     """Analyze sentiment of text using VADER"""
@@ -202,10 +239,20 @@ def generate_sample_data():
         "The new security system is working well. I feel much safer now.",
         "There's a suspicious person hanging around the parking lot. Should we report this?",
         "The holiday decorations look amazing! Thank you to everyone who helped.",
-        "The garbage collection schedule changed without notice. This is very inconvenient."
+        "The garbage collection schedule changed without notice. This is very inconvenient.",
+        "The fitness center equipment is in excellent condition. Great job maintaining it!",
+        "EMERGENCY: The fire alarm system is broken! This is a safety hazard!",
+        "The community events this month were fantastic. Really brought everyone together.",
+        "The parking situation is getting worse. We need more spaces.",
+        "The landscaping team does such a beautiful job. The flowers are gorgeous!",
+        "CONSPIRACY: They're putting chemicals in the air vents to control us!",
+        "The package delivery system is working perfectly. Very convenient.",
+        "There's a leak in the basement that needs immediate attention.",
+        "The community newsletter is very informative. Keep up the good work!",
+        "The WiFi speed has improved significantly. Thank you for the upgrade!"
     ]
     
-    sample_authors = ["Sarah M.", "John D.", "Maria L.", "David K.", "Lisa R.", "Mike T.", "Emma W.", "Alex P.", "Rachel S.", "Tom B."]
+    sample_authors = ["Sarah M.", "John D.", "Maria L.", "David K.", "Lisa R.", "Mike T.", "Emma W.", "Alex P.", "Rachel S.", "Tom B.", "Jennifer H.", "Robert C.", "Amanda F.", "Michael S.", "Jessica L.", "Christopher M.", "Nicole R.", "Daniel P.", "Ashley T.", "Kevin B."]
     
     conn = sqlite3.connect('community_pulse.db')
     cursor = conn.cursor()
@@ -254,6 +301,160 @@ def generate_sample_data():
 generate_sample_data()
 
 # API Endpoints
+@app.post("/api/analyze", response_model=AnalyzeResponse)
+async def analyze_content(request: AnalyzeRequest):
+    """Real-time content analysis without storing in database"""
+    try:
+        # Analyze sentiment
+        sentiment_result = analyze_sentiment(request.content)
+        
+        # Detect misinformation
+        misinformation_risk = detect_misinformation(request.content)
+        
+        # Calculate priority score
+        priority_score = calculate_priority_score(
+            sentiment_result['score'],
+            misinformation_risk,
+            len(request.content)
+        )
+        
+        return AnalyzeResponse(
+            content=request.content,
+            author=request.author,
+            sentiment_score=sentiment_result['score'],
+            sentiment_label=sentiment_result['label'],
+            misinformation_risk=misinformation_risk,
+            priority_score=priority_score,
+            analysis_timestamp=datetime.now().isoformat()
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing content: {str(e)}")
+
+@app.post("/api/sentiment-analysis", response_model=SentimentAnalysisResponse)
+async def analyze_sentiment_with_confidence(request: SentimentAnalysisRequest):
+    """Analyze community post sentiment with confidence scores"""
+    try:
+        # Analyze sentiment using VADER
+        sentiment_result = analyze_sentiment(request.content)
+        
+        # Calculate confidence scores based on VADER scores
+        positive_confidence = sentiment_result['positive']
+        negative_confidence = sentiment_result['negative']
+        neutral_confidence = sentiment_result['neutral']
+        
+        # Overall confidence is the highest of the three scores
+        confidence_score = max(positive_confidence, negative_confidence, neutral_confidence)
+        
+        return SentimentAnalysisResponse(
+            content=request.content,
+            author=request.author,
+            sentiment_score=sentiment_result['score'],
+            sentiment_label=sentiment_result['label'],
+            confidence_score=confidence_score,
+            positive_confidence=positive_confidence,
+            negative_confidence=negative_confidence,
+            neutral_confidence=neutral_confidence,
+            analysis_timestamp=datetime.now().isoformat()
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing sentiment: {str(e)}")
+
+@app.get("/api/health", response_model=HealthResponse)
+async def get_community_health():
+    """Get community health score and recommendations"""
+    try:
+        conn = sqlite3.connect('community_pulse.db')
+        cursor = conn.cursor()
+        
+        # Get total posts
+        cursor.execute("SELECT COUNT(*) FROM posts")
+        total_posts = cursor.fetchone()[0]
+        
+        if total_posts == 0:
+            return HealthResponse(
+                community_health_score=50.0,
+                total_posts=0,
+                positive_ratio=0.0,
+                negative_ratio=0.0,
+                misinformation_ratio=0.0,
+                health_status="No data available",
+                recommendations=["Start collecting community posts to get health insights"]
+            )
+        
+        # Get sentiment distribution
+        cursor.execute("SELECT sentiment_label, COUNT(*) FROM posts GROUP BY sentiment_label")
+        sentiment_counts = dict(cursor.fetchall())
+        
+        positive_posts = sentiment_counts.get('positive', 0)
+        negative_posts = sentiment_counts.get('negative', 0)
+        
+        positive_ratio = positive_posts / total_posts
+        negative_ratio = negative_posts / total_posts
+        
+        # Get misinformation alerts
+        cursor.execute("SELECT COUNT(*) FROM posts WHERE misinformation_risk > 0.5")
+        misinformation_alerts = cursor.fetchone()[0]
+        misinformation_ratio = misinformation_alerts / total_posts
+        
+        # Calculate community health score (0-100)
+        health_score = 50.0  # Base score
+        
+        # Adjust based on sentiment
+        health_score += (positive_ratio - negative_ratio) * 30
+        
+        # Penalize for misinformation
+        health_score -= misinformation_ratio * 20
+        
+        health_score = max(0, min(100, health_score))
+        
+        # Determine health status
+        if health_score >= 80:
+            health_status = "Excellent"
+            recommendations = [
+                "Maintain current community engagement strategies",
+                "Continue monitoring for any emerging issues",
+                "Consider expanding positive community initiatives"
+            ]
+        elif health_score >= 60:
+            health_status = "Good"
+            recommendations = [
+                "Address negative sentiment issues proactively",
+                "Increase positive community engagement activities",
+                "Monitor misinformation trends closely"
+            ]
+        elif health_score >= 40:
+            health_status = "Fair"
+            recommendations = [
+                "Implement immediate community improvement initiatives",
+                "Address high-priority concerns promptly",
+                "Consider community feedback sessions"
+            ]
+        else:
+            health_status = "Poor"
+            recommendations = [
+                "Urgent action required for community health",
+                "Implement comprehensive community improvement plan",
+                "Address all high-priority issues immediately",
+                "Consider external community management support"
+            ]
+        
+        conn.close()
+        
+        return HealthResponse(
+            community_health_score=round(health_score, 1),
+            total_posts=total_posts,
+            positive_ratio=round(positive_ratio, 3),
+            negative_ratio=round(negative_ratio, 3),
+            misinformation_ratio=round(misinformation_ratio, 3),
+            health_status=health_status,
+            recommendations=recommendations
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving community health: {str(e)}")
+
 @app.post("/api/posts", response_model=PostResponse)
 async def create_post(post: PostCreate):
     """Submit a new community post for analysis"""
@@ -538,11 +739,14 @@ async def root():
         "message": "CommunityPulse API is running!",
         "version": "1.0.0",
         "endpoints": {
-            "POST /api/posts": "Submit community posts",
+            "POST /api/posts": "Submit community posts for analysis",
+            "GET /api/posts": "Retrieve analyzed posts with sentiment scores",
+            "POST /api/analyze": "Real-time content analysis",
+            "POST /api/sentiment-analysis": "Sentiment analysis with confidence scores",
+            "GET /api/dashboard": "Community intelligence metrics",
+            "GET /api/health": "Community health score",
             "GET /api/analytics": "Get community analytics",
-            "GET /api/alerts": "Get alerts",
-            "GET /api/dashboard": "Get dashboard data",
-            "GET /api/posts": "Get paginated posts"
+            "GET /api/alerts": "Get alerts"
         }
     }
 

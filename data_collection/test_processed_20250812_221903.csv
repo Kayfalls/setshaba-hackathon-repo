@@ -1,0 +1,4 @@
+content,author,sentiment,category,length,word_count,exclamation_count,question_count
+i love this community! the new amenities are fantastic.,Sarah M.,positive,general,55,9,1,0
+i'm really frustrated with the noise from construction.,John D.,negative,noise-complaints,55,8,0,0
+has anyone noticed the new development plans?,Maria L.,neutral,local-news,45,7,0,1

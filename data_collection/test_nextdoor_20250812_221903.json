@@ -1,0 +1,47 @@
+[
+  {
+    "content": "Why is the maintenance issues still happening?",
+    "author": "Nicole R.",
+    "category": "crime-safety",
+    "sentiment": "negative",
+    "timestamp": "2025-07-21 23:47:03",
+    "likes": 8,
+    "comments": 19
+  },
+  {
+    "content": "Does anyone know about the neighborhood changes? Thanks in advance!",
+    "author": "Sarah M.",
+    "category": "general",
+    "sentiment": "neutral",
+    "timestamp": "2025-08-02 05:42:03",
+    "likes": 2,
+    "comments": 8
+  },
+  {
+    "content": "I'm really frustrated with the street maintenance.",
+    "author": "Michael S.",
+    "category": "general",
+    "sentiment": "negative",
+    "timestamp": "2025-08-05 02:19:03",
+    "likes": 20,
+    "comments": 1
+  },
+  {
+    "content": "I'm trying to figure out the emergency procedures. Thanks in advance!",
+    "author": "Sarah M.",
+    "category": "classifieds",
+    "sentiment": "neutral",
+    "timestamp": "2025-07-30 13:48:03",
+    "likes": 5,
+    "comments": 5
+  },
+  {
+    "content": "Can someone help me understand the neighborhood history?",
+    "author": "William R.",
+    "category": "local-news",
+    "sentiment": "neutral",
+    "timestamp": "2025-08-02 03:54:03",
+    "likes": 11,
+    "comments": 1
+  }
+]
