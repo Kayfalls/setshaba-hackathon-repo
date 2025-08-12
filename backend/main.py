@@ -143,6 +143,21 @@ class HealthResponse(BaseModel):
     health_status: str
     recommendations: List[str]
 
+class SentimentAnalysisRequest(BaseModel):
+    content: str
+    author: Optional[str] = "Anonymous"
+
+class SentimentAnalysisResponse(BaseModel):
+    content: str
+    author: str
+    sentiment_score: float
+    sentiment_label: str
+    confidence_score: float
+    positive_confidence: float
+    negative_confidence: float
+    neutral_confidence: float
+    analysis_timestamp: str
+
 # AI Analysis Functions
 def analyze_sentiment(text: str) -> dict:
     """Analyze sentiment of text using VADER"""
@@ -315,6 +330,36 @@ async def analyze_content(request: AnalyzeRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error analyzing content: {str(e)}")
+
+@app.post("/api/sentiment-analysis", response_model=SentimentAnalysisResponse)
+async def analyze_sentiment_with_confidence(request: SentimentAnalysisRequest):
+    """Analyze community post sentiment with confidence scores"""
+    try:
+        # Analyze sentiment using VADER
+        sentiment_result = analyze_sentiment(request.content)
+        
+        # Calculate confidence scores based on VADER scores
+        positive_confidence = sentiment_result['positive']
+        negative_confidence = sentiment_result['negative']
+        neutral_confidence = sentiment_result['neutral']
+        
+        # Overall confidence is the highest of the three scores
+        confidence_score = max(positive_confidence, negative_confidence, neutral_confidence)
+        
+        return SentimentAnalysisResponse(
+            content=request.content,
+            author=request.author,
+            sentiment_score=sentiment_result['score'],
+            sentiment_label=sentiment_result['label'],
+            confidence_score=confidence_score,
+            positive_confidence=positive_confidence,
+            negative_confidence=negative_confidence,
+            neutral_confidence=neutral_confidence,
+            analysis_timestamp=datetime.now().isoformat()
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing sentiment: {str(e)}")
 
 @app.get("/api/health", response_model=HealthResponse)
 async def get_community_health():
@@ -697,6 +742,7 @@ async def root():
             "POST /api/posts": "Submit community posts for analysis",
             "GET /api/posts": "Retrieve analyzed posts with sentiment scores",
             "POST /api/analyze": "Real-time content analysis",
+            "POST /api/sentiment-analysis": "Sentiment analysis with confidence scores",
             "GET /api/dashboard": "Community intelligence metrics",
             "GET /api/health": "Community health score",
             "GET /api/analytics": "Get community analytics",

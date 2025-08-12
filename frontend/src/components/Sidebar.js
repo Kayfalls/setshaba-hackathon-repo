@@ -11,7 +11,7 @@ import {
   Activity
 } from 'lucide-react';
 
-const Sidebar = () => {
+const Sidebar = ({ communityHealth }) => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
 
@@ -81,9 +81,16 @@ const Sidebar = () => {
               <span className="text-sm font-medium text-gray-700">Community Stats</span>
             </div>
             <div className="text-xs text-gray-500">
-              <div>Total Posts: 1,247</div>
+              <div>Total Posts: {communityHealth?.total_posts || '1,247'}</div>
               <div>Active Users: 89</div>
-              <div>Health Score: 78/100</div>
+              <div className={`font-medium ${communityHealth?.community_health_score >= 80 ? 'text-success-600' : communityHealth?.community_health_score >= 60 ? 'text-warning-600' : 'text-danger-600'}`}>
+                Health Score: {communityHealth?.community_health_score || '78'}/100
+              </div>
+              {communityHealth?.health_status && (
+                <div className="text-xs mt-1">
+                  Status: <span className="font-medium">{communityHealth.health_status}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

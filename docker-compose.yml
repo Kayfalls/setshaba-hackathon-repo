@@ -2,17 +2,35 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: communitypulse-backend
     ports:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./backend/community_pulse.db:/app/community_pulse.db
     environment:
       - PYTHONPATH=/app
+      - DATABASE_URL=sqlite:///./community_pulse.db
+      - CORS_ORIGINS=["http://localhost:3000", "http://127.0.0.1:3000"]
+      - ENVIRONMENT=development
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - communitypulse-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
-    build: ./frontend
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: communitypulse-frontend
     ports:
       - "3000:3000"
     volumes:
@@ -20,21 +38,54 @@ services:
       - /app/node_modules
     environment:
       - REACT_APP_API_URL=http://localhost:8000
+      - REACT_APP_ENVIRONMENT=development
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
     command: npm start
+    networks:
+      - communitypulse-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Optional: Add a database service if needed
+  # Optional: Redis for caching (uncomment if needed)
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: communitypulse-redis
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - communitypulse-network
+  #   restart: unless-stopped
+
+  # Optional: PostgreSQL database (uncomment if needed)
   # db:
-  #   image: postgres:13
+  #   image: postgres:15-alpine
+  #   container_name: communitypulse-db
   #   environment:
   #     POSTGRES_DB: communitypulse
   #     POSTGRES_USER: admin
   #     POSTGRES_PASSWORD: password
+  #     POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
   #   volumes:
   #     - postgres_data:/var/lib/postgresql/data
+  #     - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql
   #   ports:
   #     - "5432:5432"
+  #   networks:
+  #     - communitypulse-network
+  #   restart: unless-stopped
+
+networks:
+  communitypulse-network:
+    driver: bridge
 
 volumes:
   postgres_data:
+  redis_data:
